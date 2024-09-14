@@ -1,5 +1,59 @@
+/******************************************************************************
+
+  Copyright (c) 2008-2012 Ryan Juckett
+  http://www.ryanjuckett.com/
+
+  This software is provided 'as-is', without any express or implied
+  warranty. In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+
+  3. This notice may not be removed or altered from any source
+     distribution.
+
+*******************************************************************************
+
+  Ported to Rust by Ethan Wilkes in 2024.
+
+******************************************************************************/
 use std::f64;
 
+/// An object representing a simplified damped harmonic oscillator, as written
+/// by [Ryan Juckett](http://www.ryanjuckett.com/). I have not tried to update
+/// the API for this code
+///
+/// A [`Spring`] object represents a cached set of coefficients that can be used
+/// to update any position and velocities values as if they were attached via
+/// spring to a certain equillibrium point. This point can change (for example,
+/// if you wanted a circle to follow your mouse).
+///
+/// The position and velocity values are one dimensional. If you would like to
+/// use this code to create 2D or 3D spring motion, try something like this:
+///
+/// ```rust
+/// use miniphys::spring::{fps, Spring};
+///
+/// let delta_time = fps(60);
+/// let spring_cache = Spring::new(delta_time, 6.0, 0.5);
+/// let mut x_pos = 0.;
+/// let mut y_pos = 0.;
+/// let mut x_vel = 0.;
+/// let mut y_vel = 0.;
+///
+/// (x_pos, x_vel) = spring_cache.update(x_pos, x_vel, 0.0);
+/// (y_pos, y_vel) = spring_cache.update(y_pos, y_vel, 0.0);
+/// ```
 pub struct Spring {
     pos_pos_coef: f64,
     pos_vel_coef: f64,
@@ -130,6 +184,8 @@ impl Spring {
 /// # Example
 ///
 /// ```rust
+/// use miniphys::spring::fps;
+///
 /// let delta_time = fps(60);
 /// ```
 pub fn fps(n: u32) -> f64 {

@@ -9,9 +9,6 @@ use ratatui::{
 use std::error::Error;
 use std::time::{Duration, Instant};
 
-// Include your Spring struct and implementation here
-// ... (copy the Spring struct and implementation from the provided code)
-
 struct App {
     spring: Spring,
     position: f64,

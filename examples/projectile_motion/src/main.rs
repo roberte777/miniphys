@@ -1,8 +1,4 @@
-use crossterm::{
-    event::{self, DisableMouseCapture, Event, KeyCode},
-    execute,
-    terminal::{disable_raw_mode, LeaveAlternateScreen},
-};
+use crossterm::event::{self, Event, KeyCode};
 use miniphys::projectile_motion::Projectile;
 use ratatui::{
     layout::{Constraint, Direction, Layout},
@@ -14,9 +10,6 @@ use ratatui::{
 };
 use std::error::Error;
 use std::time::{Duration, Instant};
-
-// Include your Projectile struct and implementation here
-// ... (copy the Projectile struct and implementation from the provided code)
 
 struct App {
     projectile: Projectile,

@@ -29,3 +29,26 @@ impl Projectile {
         self.position.into()
     }
 }
+
+// air resistance
+// fn update(&mut self, delta_time: f64) {
+//     // Air resistance parameters
+//     let drag_coefficient = 0.05; // Adjust this value as needed
+//     let speed = (self.velocity[0].powi(2) + self.velocity[1].powi(2)).sqrt();
+//
+//     // Calculate drag force components
+//     let drag_force_x = -drag_coefficient * self.velocity[0] * speed;
+//     let drag_force_y = -drag_coefficient * self.velocity[1] * speed;
+//
+//     // Update accelerations
+//     self.acceleration[0] = drag_force_x;
+//     self.acceleration[1] = -9.81 + drag_force_y; // Gravity plus drag
+//
+//     // Update velocities
+//     self.velocity[0] += self.acceleration[0] * delta_time;
+//     self.velocity[1] += self.acceleration[1] * delta_time;
+//
+//     // Update positions
+//     self.position[0] += self.velocity[0] * delta_time;
+//     self.position[1] += self.velocity[1] * delta_time;
+// }
