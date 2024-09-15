@@ -7,3 +7,7 @@
 - Center cloth example
 - Make project motion example be user driven instead (change angle of cannon,
 manually fire, etc.)
+- Add README
+- Add docs
+- Add images / videos
+- Publish crate
