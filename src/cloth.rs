@@ -32,8 +32,8 @@ impl Particle {
 
         // Verlet integration
         let new_pos = self.position
-            + (self.position - self.previous_position)
-            + self.acceleration * delta_time * delta_time;
+            + (self.position - self.previous_position) * 0.99
+            + self.acceleration * 0.99 * delta_time * delta_time;
 
         self.previous_position = self.position;
         self.position = new_pos;
@@ -48,17 +48,6 @@ impl Particle {
     }
     pub fn pinned(&self) -> bool {
         self.pinned
-    }
-
-    /// Calculate veloctiy based on change in position and change in time (seconds)
-    fn velocity(&self, delta_time: f64) -> Vector2<f64> {
-        (self.position - self.previous_position) / delta_time
-    }
-
-    /// Calculate damping force based on seconds since last update
-    fn damping_force(&self, delta_time: f64) -> Vector2<f64> {
-        let velocity = self.velocity(delta_time);
-        velocity * -DAMPING_CONSTANT
     }
 }
 
@@ -159,35 +148,31 @@ impl Cloth {
 
     pub fn simulate(&mut self, delta_time: Duration) {
         let delta_time = delta_time.as_secs_f64();
-        // Apply gravity and external forces
+        // update points
         for particle in self.particles.iter_mut() {
-            if !particle.pinned {
-                particle.apply_force(gravity());
-                let damping = particle.damping_force(delta_time);
-                particle.apply_force(damping);
-            }
+            particle.apply_force(gravity());
+            particle.update(delta_time)
         }
 
-        // Apply spring forces
-        for constraint in self.constraints.iter() {
-            let (index1, index2) = constraint.particles();
-            let p1 = self.particles[index1].position();
-            let p2 = self.particles[index2].position();
-            let force = hookes_law(&p1, &p2, constraint.rest_length);
+        for _ in 0..2 {
+            for constraint in self.constraints.iter() {
+                let (p0_index, p1_index) = constraint.particles();
+                let p0_pos = self.particles[p0_index].position;
+                let p1_pos = self.particles[p1_index].position;
 
-            if !self.particles[index1].pinned {
-                self.particles[index1].apply_force(force);
-            }
-            if !self.particles[index2].pinned {
-                self.particles[index2].apply_force(force * -1.0);
+                let diff = p0_pos - p1_pos;
+                let dist = diff.norm();
+                let diff_factor = (constraint.rest_length() - dist) / dist;
+                let offset = diff * diff_factor * 0.5;
+
+                if !self.particles[p0_index].pinned() {
+                    self.particles[p0_index].set_position(p0_pos + offset);
+                }
+                if !self.particles[p1_index].pinned() {
+                    self.particles[p1_index].set_position(p1_pos - offset);
+                }
             }
         }
-
-        // Update particle positions
-        for particle in self.particles.iter_mut() {
-            particle.update(delta_time);
-        }
-
         // Reset accelerations
         for particle in self.particles.iter_mut() {
             particle.acceleration = Vector2::zeros();
@@ -286,24 +271,7 @@ impl Cloth {
     }
 }
 const GRAVITY: f64 = 987.;
-const SPRING_CONSTANT: f64 = 500.;
-const DAMPING_CONSTANT: f64 = 2.0;
 //functions to return forces
 pub fn gravity() -> Vector2<f64> {
     Vector2::new(0.0, GRAVITY)
-}
-
-pub fn hookes_law(p1: &Vector2<f64>, p2: &Vector2<f64>, rest_length: f64) -> Vector2<f64> {
-    // spring_force = -k * displacement
-    let displacement = p2 - p1;
-    let displacement = displacement.normalize() * (rest_length - displacement.magnitude());
-
-    displacement * -SPRING_CONSTANT
-}
-
-pub fn damping_force(velocity: &Vector2<f64>) -> Vector2<f64> {
-    // damping_force = -c * relative_velocity
-    let relative_velocity = velocity;
-
-    relative_velocity * -DAMPING_CONSTANT
 }
