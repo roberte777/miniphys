@@ -1,5 +1,5 @@
 use nalgebra::base::Vector2;
-use std::{f64::consts::SQRT_2, time::Duration};
+use std::{collections::HashSet, time::Duration};
 
 pub struct Particle {
     position: Vector2<f64>,
@@ -94,7 +94,7 @@ impl Cloth {
             for x in 0..width {
                 let position = Vector2::new(x as f64 * spacing, y as f64 * spacing);
                 // Pin the top row of particles to simulate hanging cloth
-                let pinned = y == 0;
+                let pinned = y == 0 && x % 2 == 0;
                 particles.push(Particle::new(position, pinned));
             }
         }
@@ -112,26 +112,6 @@ impl Cloth {
                 if y < height - 1 {
                     let below = index + width;
                     constraints.push(Constraint::new(index, below, spacing));
-                }
-
-                // Shear constraints (diagonals)
-                if x < width - 1 && y < height - 1 {
-                    let diag_right = index + width + 1;
-                    constraints.push(Constraint::new(index, diag_right, spacing * SQRT_2));
-                }
-                if x > 0 && y < height - 1 {
-                    let diag_left = index + width - 1;
-                    constraints.push(Constraint::new(index, diag_left, spacing * SQRT_2));
-                }
-
-                // Bend constraints (skip one particle)
-                if x < width - 2 {
-                    let right = index + 2;
-                    constraints.push(Constraint::new(index, right, spacing * 2.0));
-                }
-                if y < height - 2 {
-                    let below = index + width * 2;
-                    constraints.push(Constraint::new(index, below, spacing * 2.0));
                 }
             }
         }
@@ -154,7 +134,7 @@ impl Cloth {
             particle.update(delta_time)
         }
 
-        for _ in 0..2 {
+        for _ in 0..4 {
             for constraint in self.constraints.iter() {
                 let (p0_index, p1_index) = constraint.particles();
                 let p0_pos = self.particles[p0_index].position;
@@ -162,6 +142,9 @@ impl Cloth {
 
                 let diff = p0_pos - p1_pos;
                 let dist = diff.norm();
+                if diff.magnitude() < f64::EPSILON {
+                    continue;
+                }
                 let diff_factor = (constraint.rest_length() - dist) / dist;
                 let offset = diff * diff_factor * 0.5;
 
@@ -270,6 +253,8 @@ impl Cloth {
         &self.selected_particles
     }
 }
+
+/// 987 pixels per second squared
 const GRAVITY: f64 = 987.;
 //functions to return forces
 pub fn gravity() -> Vector2<f64> {

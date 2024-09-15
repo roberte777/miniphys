@@ -7,7 +7,7 @@ use nalgebra::base::Vector2;
 #[macroquad::main("Cloth Simulation")]
 async fn main() {
     // Initialize the cloth simulation
-    let mut cloth = Cloth::new(30, 20, 40.0);
+    let mut cloth = Cloth::new(31, 20, 40.0);
 
     // Variables for interaction
     let mut dragging = false;
