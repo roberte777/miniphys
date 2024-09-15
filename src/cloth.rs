@@ -50,16 +50,16 @@ impl Particle {
         self.pinned
     }
 
-    // /// Calculate veloctiy based on change in position and change in time (seconds)
-    // fn velocity(&self, delta_time: f64) -> Vector2<f64> {
-    //     self.position.sub(&self.previous_position).div(delta_time)
-    // }
-    //
-    // /// Calculate damping force based on seconds since last update
-    // fn damping_force(&self, delta_time: f64) -> Vector2 {
-    //     let velocity = self.velocity(delta_time);
-    //     velocity.mul(-DAMPING_CONSTANT)
-    // }
+    /// Calculate veloctiy based on change in position and change in time (seconds)
+    fn velocity(&self, delta_time: f64) -> Vector2<f64> {
+        (self.position - self.previous_position) / delta_time
+    }
+
+    /// Calculate damping force based on seconds since last update
+    fn damping_force(&self, delta_time: f64) -> Vector2<f64> {
+        let velocity = self.velocity(delta_time);
+        velocity * -DAMPING_CONSTANT
+    }
 }
 
 pub struct Constraint {
@@ -163,8 +163,8 @@ impl Cloth {
         for particle in self.particles.iter_mut() {
             if !particle.pinned {
                 particle.apply_force(gravity());
-                // let damping = particle.damping_force(delta_time);
-                // particle.apply_force(damping);
+                let damping = particle.damping_force(delta_time);
+                particle.apply_force(damping);
             }
         }
 
@@ -287,7 +287,7 @@ impl Cloth {
 }
 const GRAVITY: f64 = 987.;
 const SPRING_CONSTANT: f64 = 500.;
-const DAMPING_CONSTANT: f64 = 5.0;
+const DAMPING_CONSTANT: f64 = 2.0;
 //functions to return forces
 pub fn gravity() -> Vector2<f64> {
     Vector2::new(0.0, GRAVITY)
