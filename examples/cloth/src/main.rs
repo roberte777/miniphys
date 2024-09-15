@@ -6,6 +6,7 @@ use crossterm::{
     execute,
     terminal::{enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use nalgebra::Vector2;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     style::{Color, Style},
@@ -21,7 +22,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use miniphys::cloth::{Cloth, Vec2};
+use miniphys::cloth::Cloth;
 
 enum Event<I> {
     Input(I),
@@ -35,8 +36,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     for particle in cloth.particles() {
         println!(
             "particles: {}:{}",
-            particle.position().x(),
-            particle.position().y()
+            particle.position().x,
+            particle.position().y
         );
     }
 
@@ -74,7 +75,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Variables for interaction
     let mut dragging = false;
-    let mut mouse_pos = Vec2::zero();
+    let mut mouse_pos = Vector2::zeros();
     let mut right_button = false;
 
     // Main loop
@@ -93,7 +94,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     ..
                 } => {
                     println!("Got mouse event");
-                    mouse_pos = Vec2::new(column as f64, row as f64);
+                    mouse_pos = Vector2::new(column as f64, row as f64);
                     if button == MouseButton::Right {
                         // Start dragging particles
                         dragging = true;
@@ -121,7 +122,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     row,
                     ..
                 } => {
-                    mouse_pos = Vec2::new(column as f64, row as f64);
+                    mouse_pos = Vector2::new(column as f64, row as f64);
                     if dragging && right_button {
                         cloth.move_selected_particles(mouse_pos);
                     }
@@ -153,10 +154,10 @@ fn ui(f: &mut Frame, cloth: &Cloth) {
                 let p1 = cloth.particles()[index_a].position();
                 let p2 = cloth.particles()[index_b].position();
                 ctx.draw(&Line {
-                    x1: p1.x(),
-                    y1: p1.y(),
-                    x2: p2.x(),
-                    y2: p2.y(),
+                    x1: p1.x,
+                    y1: p1.y,
+                    x2: p2.x,
+                    y2: p2.y,
                     color: Color::White,
                 });
             }
@@ -170,8 +171,8 @@ fn ui(f: &mut Frame, cloth: &Cloth) {
                     Color::Yellow
                 };
                 let circle = Circle {
-                    x: pos.x(),
-                    y: pos.y(),
+                    x: pos.x,
+                    y: pos.y,
                     radius: 0.5,
                     color,
                 };

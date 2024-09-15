@@ -1,89 +1,27 @@
+use nalgebra::base::Vector2;
 use std::{f64::consts::SQRT_2, time::Duration};
 
-#[derive(Clone, Copy, Debug)]
-pub struct Vec2 {
-    x: f64,
-    y: f64,
-}
-
-impl Vec2 {
-    pub fn new(x: f64, y: f64) -> Self {
-        Vec2 { x, y }
-    }
-    pub fn normalize(self) -> Self {
-        let len = self.length();
-        if len == 0.0 {
-            return Vec2::zero();
-        }
-        self.mul(len.recip())
-    }
-
-    pub fn x(&self) -> f64 {
-        self.x
-    }
-
-    pub fn y(&self) -> f64 {
-        self.y
-    }
-
-    pub fn zero() -> Self {
-        Vec2 { x: 0.0, y: 0.0 }
-    }
-
-    pub fn length(&self) -> f64 {
-        (self.x * self.x + self.y * self.y).sqrt()
-    }
-
-    pub fn sub(&self, other: &Vec2) -> Vec2 {
-        Vec2 {
-            x: self.x - other.x,
-            y: self.y - other.y,
-        }
-    }
-
-    pub fn add(&self, other: &Vec2) -> Vec2 {
-        Vec2 {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
-    }
-
-    pub fn mul(&self, scalar: f64) -> Vec2 {
-        Vec2 {
-            x: self.x * scalar,
-            y: self.y * scalar,
-        }
-    }
-
-    pub fn div(&self, scalar: f64) -> Vec2 {
-        Vec2 {
-            x: self.x / scalar,
-            y: self.y / scalar,
-        }
-    }
-}
-
 pub struct Particle {
-    position: Vec2,
-    previous_position: Vec2,
-    acceleration: Vec2,
+    position: Vector2<f64>,
+    previous_position: Vector2<f64>,
+    acceleration: Vector2<f64>,
     mass: f64,
     pinned: bool,
 }
 
 impl Particle {
-    fn new(position: Vec2, pinned: bool) -> Self {
+    fn new(position: Vector2<f64>, pinned: bool) -> Self {
         Particle {
             position,
             previous_position: position,
-            acceleration: Vec2::zero(),
+            acceleration: Vector2::zeros(),
             mass: 1.0,
             pinned,
         }
     }
 
-    fn apply_force(&mut self, force: Vec2) {
-        self.acceleration = self.acceleration.add(&force.div(self.mass));
+    fn apply_force(&mut self, force: Vector2<f64>) {
+        self.acceleration += force / self.mass;
     }
 
     /// Update based on number of seconds since last update
@@ -92,40 +30,36 @@ impl Particle {
             return;
         }
 
-        let temp = self.position;
-
         // Verlet integration
-        let velocity = self.position.sub(&self.previous_position);
-        self.position = self
-            .position
-            .add(&velocity)
-            .add(&self.acceleration.mul(delta_time * delta_time));
+        let new_pos = self.position
+            + (self.position - self.previous_position)
+            + self.acceleration * delta_time * delta_time;
 
-        self.previous_position = temp;
+        self.previous_position = self.position;
+        self.position = new_pos;
     }
 
-    pub fn position(&self) -> &Vec2 {
-        &self.position
+    pub fn position(&self) -> Vector2<f64> {
+        self.position
     }
-    fn set_position(&mut self, position: Vec2) {
+    fn set_position(&mut self, position: Vector2<f64>) {
         self.position = position;
-        self.previous_position = position; // Prevent sudden velocity changes
-        self.acceleration = Vec2::zero();
+        self.acceleration = Vector2::zeros();
     }
     pub fn pinned(&self) -> bool {
         self.pinned
     }
 
-    /// Calculate veloctiy based on change in position and change in time (seconds)
-    fn velocity(&self, delta_time: f64) -> Vec2 {
-        self.position.sub(&self.previous_position).div(delta_time)
-    }
-
-    /// Calculate damping force based on seconds since last update
-    fn damping_force(&self, delta_time: f64) -> Vec2 {
-        let velocity = self.velocity(delta_time);
-        velocity.mul(-DAMPING_CONSTANT)
-    }
+    // /// Calculate veloctiy based on change in position and change in time (seconds)
+    // fn velocity(&self, delta_time: f64) -> Vector2<f64> {
+    //     self.position.sub(&self.previous_position).div(delta_time)
+    // }
+    //
+    // /// Calculate damping force based on seconds since last update
+    // fn damping_force(&self, delta_time: f64) -> Vector2 {
+    //     let velocity = self.velocity(delta_time);
+    //     velocity.mul(-DAMPING_CONSTANT)
+    // }
 }
 
 pub struct Constraint {
@@ -158,7 +92,7 @@ pub struct Cloth {
     width: usize,
     height: usize,
     selected_particles: Vec<usize>,
-    selection_offsets: Vec<Vec2>, // Stores offsets from mouse position
+    selection_offsets: Vec<Vector2<f64>>, // Stores offsets from mouse position
 }
 
 impl Cloth {
@@ -169,7 +103,7 @@ impl Cloth {
         // Create particles
         for y in 0..height {
             for x in 0..width {
-                let position = Vec2::new(x as f64 * spacing, y as f64 * spacing);
+                let position = Vector2::new(x as f64 * spacing, y as f64 * spacing);
                 // Pin the top row of particles to simulate hanging cloth
                 let pinned = y == 0;
                 particles.push(Particle::new(position, pinned));
@@ -229,8 +163,8 @@ impl Cloth {
         for particle in self.particles.iter_mut() {
             if !particle.pinned {
                 particle.apply_force(gravity());
-                let damping = particle.damping_force(delta_time);
-                particle.apply_force(damping);
+                // let damping = particle.damping_force(delta_time);
+                // particle.apply_force(damping);
             }
         }
 
@@ -239,13 +173,13 @@ impl Cloth {
             let (index1, index2) = constraint.particles();
             let p1 = self.particles[index1].position();
             let p2 = self.particles[index2].position();
-            let force = hookes_law(p1, p2, constraint.rest_length);
+            let force = hookes_law(&p1, &p2, constraint.rest_length);
 
             if !self.particles[index1].pinned {
                 self.particles[index1].apply_force(force);
             }
             if !self.particles[index2].pinned {
-                self.particles[index2].apply_force(force.mul(-1.0));
+                self.particles[index2].apply_force(force * -1.0);
             }
         }
 
@@ -256,7 +190,7 @@ impl Cloth {
 
         // Reset accelerations
         for particle in self.particles.iter_mut() {
-            particle.acceleration = Vec2::zero();
+            particle.acceleration = Vector2::zeros();
         }
     }
 
@@ -301,13 +235,13 @@ impl Cloth {
         });
     }
 
-    pub fn cut_at_mouse(&mut self, mouse_position: Vec2) {
+    pub fn cut_at_mouse(&mut self, mouse_position: Vector2<f64>) {
         // Find the nearest particle to the mouse position
         let (nearest_particle_index, distance) = self
             .particles()
             .iter()
             .enumerate()
-            .map(|(i, particle)| (i, particle.position().sub(&mouse_position).length()))
+            .map(|(i, particle)| (i, (particle.position() - mouse_position).magnitude()))
             .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
             .unwrap();
 
@@ -318,23 +252,23 @@ impl Cloth {
         }
     }
 
-    pub fn select_particles(&mut self, mouse_pos: Vec2, radius: f64) {
+    pub fn select_particles(&mut self, mouse_pos: Vector2<f64>, radius: f64) {
         self.selected_particles.clear();
         self.selection_offsets.clear();
         for (i, particle) in self.particles.iter_mut().enumerate() {
-            let distance = particle.position().sub(&mouse_pos).length();
+            let distance = (particle.position() - mouse_pos).magnitude();
             if distance <= radius {
                 self.selected_particles.push(i);
-                let offset = particle.position().sub(&mouse_pos);
+                let offset = particle.position() - mouse_pos;
                 self.selection_offsets.push(offset);
                 particle.pinned = true; // Pin the particle
             }
         }
     }
-    pub fn move_selected_particles(&mut self, mouse_pos: Vec2) {
+    pub fn move_selected_particles(&mut self, mouse_pos: Vector2<f64>) {
         for (idx, &particle_index) in self.selected_particles.iter().enumerate() {
             let offset = self.selection_offsets[idx];
-            let new_position = mouse_pos.add(&offset);
+            let new_position = mouse_pos + offset;
             self.particles[particle_index].set_position(new_position);
         }
     }
@@ -355,23 +289,21 @@ const GRAVITY: f64 = 987.;
 const SPRING_CONSTANT: f64 = 500.;
 const DAMPING_CONSTANT: f64 = 5.0;
 //functions to return forces
-pub fn gravity() -> Vec2 {
-    Vec2::new(0.0, GRAVITY)
+pub fn gravity() -> Vector2<f64> {
+    Vector2::new(0.0, GRAVITY)
 }
 
-pub fn hookes_law(p1: &Vec2, p2: &Vec2, rest_length: f64) -> Vec2 {
+pub fn hookes_law(p1: &Vector2<f64>, p2: &Vector2<f64>, rest_length: f64) -> Vector2<f64> {
     // spring_force = -k * displacement
-    let displacement = p2.sub(p1);
-    let displacement = displacement
-        .normalize()
-        .mul(rest_length - displacement.length());
+    let displacement = p2 - p1;
+    let displacement = displacement.normalize() * (rest_length - displacement.magnitude());
 
-    displacement.mul(-SPRING_CONSTANT)
+    displacement * -SPRING_CONSTANT
 }
 
-pub fn damping_force(velocity: &Vec2) -> Vec2 {
+pub fn damping_force(velocity: &Vector2<f64>) -> Vector2<f64> {
     // damping_force = -c * relative_velocity
     let relative_velocity = velocity;
 
-    relative_velocity.mul(-DAMPING_CONSTANT)
+    relative_velocity * -DAMPING_CONSTANT
 }

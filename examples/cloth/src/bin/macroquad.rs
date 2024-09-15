@@ -1,7 +1,8 @@
 use std::time::Duration;
 
 use macroquad::prelude::*;
-use miniphys::cloth::{Cloth, Vec2};
+use miniphys::cloth::Cloth;
+use nalgebra::base::Vector2;
 
 #[macroquad::main("Cloth Simulation")]
 async fn main() {
@@ -23,7 +24,7 @@ async fn main() {
             dragging = true;
             right_button = true;
             let (mouse_x, mouse_y) = mouse_position();
-            let mouse_pos = Vec2::new(mouse_x.into(), mouse_y.into());
+            let mouse_pos = Vector2::new(mouse_x.into(), mouse_y.into());
             cloth.select_particles(mouse_pos, 30.0);
         }
 
@@ -37,13 +38,13 @@ async fn main() {
         if is_mouse_button_pressed(MouseButton::Left) {
             // Cut constraints at mouse position
             let (mouse_x, mouse_y) = mouse_position();
-            let mouse_pos = Vec2::new(mouse_x.into(), mouse_y.into());
+            let mouse_pos = Vector2::new(mouse_x.into(), mouse_y.into());
             cloth.cut_at_mouse(mouse_pos);
         }
 
         if dragging && right_button {
             let (mouse_x, mouse_y) = mouse_position();
-            let mouse_pos = Vec2::new(mouse_x.into(), mouse_y.into());
+            let mouse_pos = Vector2::new(mouse_x.into(), mouse_y.into());
             cloth.move_selected_particles(mouse_pos);
         }
 
@@ -57,10 +58,10 @@ async fn main() {
             let p2 = cloth.particles()[index_b].position();
 
             draw_line(
-                p1.x() as f32,
-                p1.y() as f32,
-                p2.x() as f32,
-                p2.y() as f32,
+                p1.x as f32,
+                p1.y as f32,
+                p2.x as f32,
+                p2.y as f32,
                 1.0,
                 WHITE,
             );
@@ -69,13 +70,13 @@ async fn main() {
         // Draw particles
         for particle in cloth.particles() {
             let pos = particle.position();
-            draw_circle(pos.x() as f32, pos.y() as f32, 3.0, YELLOW);
+            draw_circle(pos.x as f32, pos.y as f32, 3.0, YELLOW);
         }
 
         // Highlight selected particles
         for &index in cloth.selected_particles() {
             let pos = cloth.particles()[index].position();
-            draw_circle_lines(pos.x() as f32, pos.y() as f32, 5.0, 2.0, RED);
+            draw_circle_lines(pos.x as f32, pos.y as f32, 5.0, 2.0, RED);
         }
 
         // Draw FPS

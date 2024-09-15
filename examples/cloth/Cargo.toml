@@ -8,3 +8,4 @@ crossterm = "0.28.1"
 ratatui = "0.28.1"
 miniphys = {path = "../../"}
 macroquad = "0.3"
+nalgebra = "0.33.0"
