@@ -32,7 +32,7 @@ impl App {
     }
 
     fn update(&mut self, delta_time: f64) {
-        self.projectile.update(delta_time);
+        self.projectile.update(Duration::from_secs_f64(delta_time));
         self.trajectory.push(self.projectile.position());
         self.time += delta_time;
 

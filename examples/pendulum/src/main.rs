@@ -20,7 +20,7 @@ impl App {
     }
 
     fn update(&mut self, delta_time: f64) {
-        self.pendulum.update(delta_time);
+        self.pendulum.update(Duration::from_secs_f64(delta_time));
         let position = self.pendulum.position();
         self.trail.push(position);
         if self.trail.len() > 50 {

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 pub struct Pendulum {
     angle: f64, // Current angle from the vertical (radians)
     angular_velocity: f64,
@@ -19,7 +21,8 @@ impl Pendulum {
         }
     }
 
-    pub fn update(&mut self, delta_time: f64) {
+    pub fn update(&mut self, delta_time: Duration) {
+        let delta_time = delta_time.as_secs_f64();
         // Equation of motion for a pendulum
         self.angular_acceleration = -self.gravity / self.length * self.angle.sin();
 

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 pub struct Projectile {
     position: [f64; 2],
     velocity: [f64; 2],
@@ -15,7 +17,8 @@ impl Projectile {
     }
 
     /// Updates the projectile's position and velocity over time.
-    pub fn update(&mut self, delta_time: f64) {
+    pub fn update(&mut self, delta_time: Duration) {
+        let delta_time = delta_time.as_secs_f64();
         // Update velocity
         self.velocity[0] += self.acceleration[0] * delta_time;
         self.velocity[1] += self.acceleration[1] * delta_time;
