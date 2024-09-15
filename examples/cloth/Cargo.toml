@@ -1,0 +1,10 @@
+[package]
+name = "cloth"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crossterm = "0.28.1"
+ratatui = "0.28.1"
+miniphys = {path = "../../"}
+macroquad = "0.3"
